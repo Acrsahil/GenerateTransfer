@@ -71,6 +71,9 @@ def db_connect():
                 GROUP BY sq.product_id
                 LIMIT 10
             )
+            with sale_summary as(
+
+            )
 
             select
             case WHEN pt.name::text LIKE '{%}' THEN (pt.name::jsonb) ->> 'en_US'
@@ -78,11 +81,12 @@ def db_connect():
             COALESCE(wh_sam,0) as Qty_wh_Sam from  stock_data sd 
             join  product_product pp on sd.pid = pp.id 
             join  product_template pt on pp.product_tmpl_id = pt.id 
-     pt.name::text LIKE '{%}'
-        AND (pt.name::jsonb) ->> 'en_US' ILIKE '%fairy skin%';
 
 
-            ''')
+
+
+            '''
+            )
 
             headers = [desc[0] for desc in cr.description]
             print("\t".join(headers))
