@@ -67,24 +67,30 @@ def db_connect():
                   ON sq.location_id = sl.id
                 AND sl.usage = 'internal'
                 JOIN product_product pp ON sq.product_id = pp.id 
-                JOIN product_template pt ON pp.product_tmpl_id = pt.id
                 GROUP BY sq.product_id
                 LIMIT 10
+            ),
+            sale_summary as (
+            select product_id ,sum(qty_delivered) as delivered_qty from sale_order_line 
+            group by product_id order by product_id limit 10
             )
-            with sale_summary as(
 
-            )
+            -- select
+            -- case WHEN pt.name::text LIKE '{%}' THEN (pt.name::jsonb) ->> 'en_US'
+            -- END AS product_name,
+            -- COALESCE(wh_sam,0) as Qty_wh_Sam from  stock_data sd 
+            -- join  product_product pp on sd.pid = pp.id 
+            -- join  product_template pt on pp.product_tmpl_id = pt.id 
 
-            select
-            case WHEN pt.name::text LIKE '{%}' THEN (pt.name::jsonb) ->> 'en_US'
-            END AS product_name,
-            COALESCE(wh_sam,0) as Qty_wh_Sam from  stock_data sd 
-            join  product_product pp on sd.pid = pp.id 
-            join  product_template pt on pp.product_tmpl_id = pt.id 
-
-
-
-
+            select 
+                CASE 
+                   WHEN pt.name::text LIKE '{%}' THEN 
+                        COALESCE((pt.name::jsonb) ->> 'en_US', (pt.name::jsonb) ->> 'en_GB', pt.name::text)
+                   ELSE pt.name::text 
+                END AS product_name
+            ,sd.wh_sam ,ss.delivered_qty from sale_summary ss 
+            join  stock_data sd on ss.product_id = sd.pid
+            join product_template pt on ss.product_id = pt.id limit 10
             '''
             )
 
@@ -93,7 +99,7 @@ def db_connect():
 
             data = cr.fetchall()
             for row in data:
-                print("\t".join(map(str, row)))
+                print("\t ".join(map(str, row)))
 
         return conn
 
