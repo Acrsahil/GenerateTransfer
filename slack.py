@@ -20,7 +20,6 @@ class SlackNotifier:
         # 2. Initialize the WebClient
         self.client = WebClient(token=token)
 
-        # 3. FIX: Convert your User ID (U...) into a proper DM Channel ID (D...)
         try:
             response = self.client.conversations_open(users=user_id)
             self.receiver_id = response["channel"]["id"]  # This converts 'U...' to 'D...'
@@ -55,7 +54,6 @@ class SlackNotifier:
             
             # Open the file in binary read mode ('rb')
             with open(file_path, "rb") as file_content:
-                # FIX: We use 'channel' here because the SDK handles mapping it internally
                 response = self.client.files_upload_v2(
                     channel=self.receiver_id,  # Uses the translated 'D...' ID
                     file=file_content,
@@ -73,16 +71,12 @@ class SlackNotifier:
 
 if __name__ == "__main__":
     notifier = SlackNotifier()
-    
-    # 1. (Optional) Send a text notification first
     notifier.send_message("Hello! Sending the existing report file from the directory.")
-    
-    # 2. Point directly to your existing file name
-    # Change "output.xlsx" to the exact name of your file if it's different
+
     existing_file = "./aws.xlsx" 
         
     # 3. Send it
     notifier.send_file(
-        file_path=existing_file, 
+        file_path=existing_file,
         initial_comment="📊 Here is the present Excel report file."
     )

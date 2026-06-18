@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 import os
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-
+import slack as sl
 from rich.console import Console
 from rich.table import Table
 load_dotenv()
@@ -150,7 +150,6 @@ def build_wide_report(df, top_n=10):
 
 
 def print_report(df):
-    df.to_excel("QuikeeTransferOut.xlsx", index=False)
 
     table = Table(title="Sales vs Stock Report", show_lines=True)
 
@@ -210,14 +209,20 @@ def main():
         wide = build_wide_report(df)
         wide = make_transfer(wide)
         print_report(wide)
-
+        wide.to_excel("QuikeeTransferOut.xlsx", index=False)
+        transfer_file = "./QuikeeTransferOut.xlsx"
+        notifier = sl.SlackNotifier()
+        notifier.send_file(
+        file_path=transfer_file,
+        initial_comment="📊 Here is the Transfer Excel report file for Quickee Order"
+    )
+
     except Exception as e:
         console.print(f"[red]Error:[/red] {e}")
 
     finally:
         if conn:
             conn.close()
-
-
+
 if __name__ == "__main__":
     main()
