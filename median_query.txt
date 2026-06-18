@@ -1,0 +1,33 @@
+WITH monthly AS (
+    SELECT
+        sol.product_id,
+
+        SUM(sol.qty_delivered) FILTER (WHERE EXTRACT(MONTH FROM sol.create_date) = 1) AS jan,
+        SUM(sol.qty_delivered) FILTER (WHERE EXTRACT(MONTH FROM sol.create_date) = 2) AS feb,
+        SUM(sol.qty_delivered) FILTER (WHERE EXTRACT(MONTH FROM sol.create_date) = 3) AS mar,
+        SUM(sol.qty_delivered) FILTER (WHERE EXTRACT(MONTH FROM sol.create_date) = 4) AS apr,
+        SUM(sol.qty_delivered) FILTER (WHERE EXTRACT(MONTH FROM sol.create_date) = 5) AS may,
+        SUM(sol.qty_delivered) FILTER (WHERE EXTRACT(MONTH FROM sol.create_date) = 6) AS jun
+
+    FROM sale_order_line sol
+    JOIN sale_order so ON sol.order_id = so.id
+    WHERE sol.create_date >= (TIMESTAMP '2026-01-01' AT TIME ZONE 'America/Denver')
+      AND sol.create_date <  (TIMESTAMP '2026-06-30' AT TIME ZONE 'America/Denver')
+      AND so.is_quickee_order = true
+    GROUP BY sol.product_id
+),
+
+median_calc AS (
+    SELECT
+        product_id,
+        jan, feb, mar, apr, may, jun,
+        unnest(ARRAY[jan, feb, mar, apr, may, jun]) AS monthly_value
+    FROM monthly
+)
+
+SELECT
+    product_id,
+    jan, feb, mar, apr, may, jun,
+    PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY monthly_value) AS median_monthly_sales
+FROM median_calc
+GROUP BY product_id, jan, feb, mar, apr, may, jun;

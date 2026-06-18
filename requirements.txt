@@ -1,4 +1,9 @@
 psycopg2-binary
 python-dotenv
 openpyxl
+python-dateutil
+rich
+pandas
+slack-sdk
+python-dotenv
 
