@@ -1,22 +1,12 @@
-import psycopg2
 import pandas as pd
-from dotenv import load_dotenv
-import os
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-import slack as sl
+import slack as sl
 from rich.console import Console
 from rich.table import Table
-load_dotenv()
-console = Console()
+from db_config import db_connect
 
-DB_CONFIG = {
-    "host": os.getenv("DB_HOST", "localhost"),
-    "port": int(os.getenv("DB_PORT", 5432)),
-    "dbname": os.getenv("DB_NAME", "odoo"),
-    "user": os.getenv("DB_USER", "odoo"),
-    "password": os.getenv("DB_PASSWORD", "odoo"),
-}
+console = Console()
 
 MONTH_MAP = {
     1: "jan", 2: "feb", 3: "mar", 4: "apr", 5: "may", 6: "jun",
@@ -106,12 +96,6 @@ def get_date_range(months=6):
     return start_date, end_date
 
 
-def db_connect():
-    conn = psycopg2.connect(**DB_CONFIG)
-    conn.set_session(readonly=True, autocommit=True)
-    return conn
-
-
 def fetch_dataframe(conn, query, params=()):
     # psycopg2 connections work fine with pd.read_sql; pandas may emit a
     # harmless UserWarning since it officially prefers SQLAlchemy connections.
@@ -150,7 +134,6 @@ def build_wide_report(df, top_n=10):
 
 
 def print_report(df):
-
     table = Table(title="Sales vs Stock Report", show_lines=True)
 
     for col in df.columns:
@@ -209,20 +192,21 @@ def main():
         wide = build_wide_report(df)
         wide = make_transfer(wide)
         print_report(wide)
-        wide.to_excel("QuikeeTransferOut.xlsx", index=False)
-        transfer_file = "./QuikeeTransferOut.xlsx"
-        notifier = sl.SlackNotifier()
-        notifier.send_file(
-        file_path=transfer_file,
-        initial_comment="📊 Here is the Transfer Excel report file for Quickee Order"
-    )
-
+        wide.to_excel("QuikeeTransferOut.xlsx", index=False)
+        transfer_file = "./QuikeeTransferOut.xlsx"
+        notifier = sl.SlackNotifier()
+        notifier.send_file(
+            file_path=transfer_file,
+            initial_comment="Here is the Transfer Excel report file for Quickee Order"
+        )
+
     except Exception as e:
         console.print(f"[red]Error:[/red] {e}")
 
     finally:
         if conn:
             conn.close()
-
+
+
 if __name__ == "__main__":
     main()
