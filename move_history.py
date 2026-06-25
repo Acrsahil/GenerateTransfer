@@ -78,4 +78,4 @@ for row in rows:
 console.print(table)
 
 cursor.close()
-conn.close()
+conn.close()ku

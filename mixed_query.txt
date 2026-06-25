@@ -1,0 +1,78 @@
+SELECT
+    DATE(sol.create_date) AS date_order,
+    'Online' AS pos_station,
+    pmc.name AS web_category,
+    pb.name AS brand_name,
+    pt.default_code AS sku_code,
+    COALESCE(pt.name->>'en_US', pt.name->>'ne_NP', pt.name::text) AS product_name,
+    sol.product_uom_qty AS qty,
+    sol.price_unit,
+    sol.price_subtotal,
+    sol.price_total AS price_subtotal_incl
+
+FROM sale_order_line sol
+JOIN sale_order so
+    ON so.id = sol.order_id
+JOIN product_product pp
+    ON pp.id = sol.product_id
+JOIN product_template pt
+    ON pt.id = pp.product_tmpl_id
+LEFT JOIN product_multiple_category pmc
+    ON pt.primary_category = pmc.id
+LEFT JOIN product_brand pb
+    ON pt.brand_id = pb.id
+
+WHERE so.jeevee_status NOT IN (
+    'PAYMENT_FAILED',
+    'ONLINE_PAYMENT_INITIATED',
+    'ORDER_CANCELLED',
+    'DELIVERY_FAILED'
+)
+  AND sol.product_uom_qty > 0
+
+UNION ALL
+
+SELECT
+    DATE(po.date_order) AS date_order,
+    CASE
+        WHEN pc.name IN (
+            'JeeVee-Baneshwor(Flr-1)',
+            'JeeVee Baneshwor(Flr-3)'
+        ) THEN 'Baneshwor'
+        WHEN pc.name = 'Jeevee Chitwan'
+            THEN 'Chitwan'
+        WHEN pc.name IN (
+            'Jeevee Pokhara (Floor-1)',
+            'Jeevee Pokhara (Floor-3)'
+        ) THEN 'Pokhara'
+        ELSE pc.name
+    END AS pos_station,
+    pmc.name AS web_category,
+    pb.name AS brand_name,
+    pt.default_code AS sku_code,
+    COALESCE(pt.name->>'en_US', pt.name->>'ne_NP', pt.name::text) AS product_name,
+    pol.qty,
+    pol.price_unit,
+    pol.price_subtotal,
+    pol.price_subtotal_incl
+
+FROM pos_order_line pol
+JOIN pos_order po
+    ON po.id = pol.order_id
+JOIN pos_session ps
+    ON ps.id = po.session_id
+JOIN pos_config pc
+    ON pc.id = ps.config_id
+JOIN product_product pp
+    ON pp.id = pol.product_id
+JOIN product_template pt
+    ON pt.id = pp.product_tmpl_id
+LEFT JOIN product_multiple_category pmc
+    ON pt.primary_category = pmc.id
+LEFT JOIN product_brand pb
+    ON pt.brand_id = pb.id
+
+WHERE po.state IN ('paid', 'done', 'invoiced')
+  AND pol.qty > 0
+
+ORDER BY date_order DESC;
