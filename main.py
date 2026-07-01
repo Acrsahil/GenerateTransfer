@@ -184,7 +184,7 @@ def main():
         conn = db_connect()
         console.print("[green]Database connected successfully[/green]")
 
-        start_date, end_date = get_date_range(6)
+        start_date, end_date = get_date_range(3)
         print("Start_Date -> ", start_date)
         print("End_Date -> ", end_date)
 

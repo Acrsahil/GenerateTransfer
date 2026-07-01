@@ -6,4 +6,3 @@ rich
 pandas
 slack-sdk
 python-dotenv
-
