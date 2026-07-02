@@ -3,6 +3,7 @@ import sys
 from datetime import date, timedelta
 import pandas as pd
 
+import re
 from rich.console import Console
 from rich.panel import Panel
 from rich.prompt import Prompt
@@ -21,6 +22,13 @@ DEFAULT_DATE_TO     = date.today().isoformat()                          # today
 DEFAULT_SOURCE      = "WH/input"   # lowercase i
 DEFAULT_DESTINATION = "WH/Stock"
 
+
+def remove_code(data):
+    data['Product Name'] = data['Product Name'].str.replace(
+            r'^\[[^\]]+\]\s*',
+        '',
+        regex=True)
+    return data
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 def ask(label: str, default: str, hint: str = "") -> str:
@@ -148,28 +156,38 @@ def main() -> None:
     # ── Run Query ─────────────────────────────────────────────────────────────
     console.print()
     with console.status("[bold cyan]Fetching transfers from database…[/bold cyan]"):
-        try:
-            rows = fetch_transfers(date_from, date_to, source, destination)
-        except Exception as exc:
-            console.print(f"\n  [bold red]DB Error:[/bold red] {exc}")
-            sys.exit(1)
+        # try:
+        #     rows = fetch_transfers(date_from, date_to, source, destination)
+        # except Exception as exc:
+        #     console.print(f"\n  [bold red]DB Error:[/bold red] {exc}")
+        #     sys.exit(1)
 
-    console.print(Rule(f"[bold]Results — {len(rows)} row(s)[/bold]", style="bright_black"))
-    console.print()
+    # console.print(Rule(f"[bold]Results — {len(rows)} row(s)[/bold]", style="bright_black"))
+    # console.print()
 
-    if not rows:
-        console.print("  [yellow]No records found for the given parameters.[/yellow]")
-
-    else:
-        # print("Distrub!")
+    # if not rows:
+    #     console.print("  [yellow]No records found for the given parameters.[/yellow]")
+    #
+    # else:
+    #     # print("Distrub!")
         if xlsx_path:
-            df1 = pd.DataFrame(rows)
+            # df1 = pd.DataFrame(rows)
             df2 = pd.read_excel(xlsx_path)
+            df2_col_name = None
 
-            print(df1.head())
-            print(df2.head())
+            remove_code(df2)
+            for col in df2.columns:
+                if "transfer" in col.lower():
+                    df2_col_name = col
 
-        render_table(rows)
+
+
+            # print(df2['Transfer'])
+
+            # df2.to_excel("output.xlsx",index=False)
+
+
+        # render_table(rows)
     console.print()
 
 
